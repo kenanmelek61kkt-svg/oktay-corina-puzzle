@@ -23,9 +23,10 @@ jobs:
 
       - name: Unpack Android project
         run: |
-          mkdir project
+          mkdir -p project
           unzip -o Oktay_Corina_Puzzle_App.zip -d project
-          find project -name settings.gradle -o -name settings.gradle.kts
+          echo "Projektdateien:"
+          find project -type f \( -name settings.gradle -o -name settings.gradle.kts -o -name build.gradle -o -name build.gradle.kts \)
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -34,8 +35,12 @@ jobs:
 
       - name: Build APK
         run: |
-          cd project
-          PROJECT_DIR=$(find . -name settings.gradle -o -name settings.gradle.kts | head -n 1 | xargs dirname)
+          SETTINGS_FILE=$(find project -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "FEHLER: Keine settings.gradle in der ZIP-Datei gefunden."
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
           cd "$PROJECT_DIR"
           gradle assembleDebug
 
